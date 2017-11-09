@@ -9,7 +9,7 @@ public class MouseLogger : MonoBehaviour,
     
 {
     public void OnPointerClick(PointerEventData eventData) {
-        Debug.Log("Clicked on: " + gameObject.name);
+        Debug.Log("Clicked on: " + gameObject.name + " >> " + eventData.position);
     }
 
     // Use this for initialization
