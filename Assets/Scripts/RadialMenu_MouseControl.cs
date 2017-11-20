@@ -35,7 +35,7 @@ namespace RadialMenu {
                     Debug.LogWarning(gameObject.name + " - PieMenu_MouseControl::Update(): AlignToViewsphere Not Implemented.");
                 }
 
-                Menu.Show(worldPosition, rotation);
+                Menu.Show(worldPosition, Camera.main.transform.forward);
             }
 
             if (Input.GetButtonUp(TriggerName)) {
@@ -43,7 +43,7 @@ namespace RadialMenu {
             }
 
             if (Menu.IsVisible) {
-                Menu.UpdateCursor(worldPosition - Menu.transform.position);
+                Menu.UpdateCursor(worldPosition);
             }
         }
     }

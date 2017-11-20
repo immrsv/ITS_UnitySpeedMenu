@@ -6,10 +6,10 @@ using UnityEngine.UI;
 namespace RadialMenu {
     public class RadialMenu_SegmentAnimator : MonoBehaviour {
 
-        public bool AlignContentsToWorld;
+        public bool AlignContentsToWorld = true;
 
         protected Image _BackgroundImage;
-        protected Image BackgroundImage {
+        public Image BackgroundImage {
             get {
                 if (_BackgroundImage == null ) _BackgroundImage = transform.GetChild(0).GetComponent<Image>();
                 return _BackgroundImage;
@@ -17,7 +17,7 @@ namespace RadialMenu {
         }
 
         protected Image _BackgroundHighlightMask;
-        protected Image BackgroundHighlightMask {
+        public Image BackgroundHighlightMask {
             get {
                 if (_BackgroundHighlightMask == null) _BackgroundHighlightMask = transform.GetChild(1).GetComponent<Image>();
                 return _BackgroundHighlightMask;
@@ -25,7 +25,7 @@ namespace RadialMenu {
         }
 
         protected Image _BackgroundHighlight;
-        protected Image BackgroundHighlight {
+        public Image BackgroundHighlight {
             get {
                 if (_BackgroundHighlight == null) _BackgroundHighlight = transform.GetChild(1).GetChild(0).GetComponent<Image>();
                 return _BackgroundHighlight;
@@ -33,7 +33,7 @@ namespace RadialMenu {
         }
 
         protected Transform _Contents;
-        protected Transform Contents {
+        public Transform Contents {
             get {
                 if ( _Contents == null ) _Contents = transform.GetChild(2).transform;
                 return _Contents;
@@ -59,47 +59,75 @@ namespace RadialMenu {
             }
         }
 
-        public float SegmentFillHalfangle { get { return BackgroundImage.transform.localRotation.z; } }
+        public float SegmentFillHalfangle { get { return SegmentFillAmount * 180; } }
 
         public float SegmentRotation {
             get {
-                return transform.rotation.z / 360.0f;
+                return transform.localRotation.z / 360.0f;
             }
             set {
-                transform.rotation = Quaternion.Euler(0, 0, 360 * value);
+                transform.localRotation = Quaternion.Euler(0, 0, 360 * value);
             }
         }
 
         public Color BackgroundColor { get { return BackgroundImage.color; } set { BackgroundImage.color = value; } }
         public Color HighlightColor { get { return BackgroundImage.color; } set { BackgroundImage.color = value; } }
-        public Color SelectedColor { get { return BackgroundImage.color; } set { BackgroundImage.color = value; } }
+        public Color SelectingColor { get { return BackgroundImage.color; } set { BackgroundImage.color = value; } }
         public Color TextColor { get { return BackgroundImage.color; } set { BackgroundImage.color = value; } }
         
-        
-        // Use this for initialization
-        void Start() {
+        public bool IsSelectable { get { return Item != null; } }
+
+        protected RadialMenu_MenuItem _Item;
+        public RadialMenu_MenuItem Item {
+            get {
+                return _Item;
+            }
+            set {
+                if (_Item == value) return;
+                _Item = value;
+
+                if (_Item != null) {
+                    Contents.GetComponent<Text>().text = _Item.name;
+                }
+                else {
+                    Contents.GetComponent<Text>().text = "-null-";
+                }
+            }
         }
 
-        // Update is called once per frame
-        void Update() {
-
-            if (AlignContentsToWorld)
-                Contents.up = Camera.main.transform.up;
+        private void Start() {
+            Contents.GetComponent<Text>().text = "-null-";
         }
 
+        private void Awake() {
+            Contents.transform.up = Vector3.up;
+        }
 
         void RM_UpdateCursor(Vector3 localPosition) {
             //Debug.Log(gameObject.name + " - OptionAnimator::_UpdateCursor(): Local Position = " + localPosition + " [" + MaskImage.transform.up + "]");
 
+            var localUp = transform.localRotation * Vector3.up;
+
             var clampedPosition = localPosition.sqrMagnitude <= 1.0 ? localPosition : localPosition.normalized;
 
-            var dot = Mathf.Clamp01(1.05f * Vector3.Dot(clampedPosition, -transform.up));
+            var dot = Mathf.Clamp01(1.05f * Vector3.Dot(clampedPosition, -localUp));
 
             transform.localScale = Vector3.one * (1.0f + dot / 10.0f);
 
             BackgroundHighlight.transform.localScale = Vector3.one * dot;
             
 
+        }
+        
+        public bool Contains(Vector3 localPosition)
+        {
+            if (!IsSelectable) return false;
+
+            var localUp = (transform.localRotation * Vector3.up);
+
+            //Debug.Log("Half Angle: " + (Mathf.Acos(Vector3.Dot(localPosition.normalized, -localUp)) * Mathf.Rad2Deg).ToString("N3") + " < " + SegmentFillHalfangle.ToString("N3"));
+
+            return (Mathf.Acos(Vector3.Dot(localPosition.normalized, -localUp)) * Mathf.Rad2Deg) < SegmentFillHalfangle;
         }
     }
 }

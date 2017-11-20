@@ -2,11 +2,8 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-[ExecuteInEditMode]
-public class TestScaler : MonoBehaviour {
+public class MeshToggle : MonoBehaviour {
 
-    [Range(0,1.5f)]
-    public float Scale;
 	// Use this for initialization
 	void Start () {
 		
@@ -14,6 +11,11 @@ public class TestScaler : MonoBehaviour {
 	
 	// Update is called once per frame
 	void Update () {
-        transform.localScale = Vector3.one * Scale;
+		
 	}
+
+    void Toggle() {
+        var renderer = GetComponent<MeshRenderer>();
+        renderer.enabled = !renderer.enabled;
+    }
 }

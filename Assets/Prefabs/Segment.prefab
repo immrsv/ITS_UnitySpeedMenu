@@ -158,11 +158,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 1631864420946868}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b00fb377dfc419e4aa4d0ccfb3e15692, type: 3}
+  m_Script: {fileID: 11500000, guid: ebe61921884e9d0449f27d8f659c19c9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   AlignContentsToWorld: 1
-  TestSize: 0
 --- !u!114 &114589250482426244
 MonoBehaviour:
   m_ObjectHideFlags: 1
