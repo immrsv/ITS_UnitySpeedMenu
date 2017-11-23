@@ -2,6 +2,9 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
+
+using RadialMenu.ScriptedMenus;
 
 namespace RadialMenu {
     public class RadialMenu_SegmentAnimator : MonoBehaviour {
@@ -83,24 +86,23 @@ namespace RadialMenu {
                 return _Item;
             }
             set {
-                if (_Item == value) return;
+                //if (_Item == value) return;
                 _Item = value;
 
                 if (_Item != null) {
-                    Contents.GetComponent<Text>().text = _Item.name;
+                    Contents.GetComponent<TextMeshProUGUI>().text = _Item.name;
                 }
                 else {
-                    Contents.GetComponent<Text>().text = "-null-";
+                    Contents.GetComponent<TextMeshProUGUI>().text = "-";
                 }
             }
         }
 
         private void Start() {
-            Contents.GetComponent<Text>().text = "-null-";
+            Contents.GetComponent<TextMeshProUGUI>().text = "--";
         }
 
-        private void Awake() {
-            Contents.transform.up = Vector3.up;
+        private void Update() {
         }
 
         void RM_UpdateCursor(Vector3 localPosition) {

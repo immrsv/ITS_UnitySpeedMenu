@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Name: Toggle Cube
   m_EditorClassIdentifier: 
   Icon: {fileID: 0}
-  ObjectName: Cube
+  ObjectName: _System
   ActionName: Toggle
-  Parameter: 
-  Children: []
+  Parameter: Cube
+  _Children: []

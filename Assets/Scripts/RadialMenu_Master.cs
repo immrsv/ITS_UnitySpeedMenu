@@ -5,6 +5,8 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
 
+using RadialMenu.ScriptedMenus;
+
 /// <summary>
 /// TODO:
 /// Preselect segment
@@ -74,7 +76,7 @@ namespace RadialMenu {
         public GameObject SegmentsMaster;
         public RadialMenu_SegmentAnimator[] Segments;
 
-        public bool IsVisible { get { return Centre.activeSelf; } }
+        public bool Visible { get { return Centre.activeSelf; } }
 
         [Header("Selection")]
         [Range(0, 1)]
@@ -106,7 +108,7 @@ namespace RadialMenu {
         [Header("Items")]
         public List<RadialMenu_MenuItem> RootItems;
 
-        protected Stack<RadialMenu_MenuItem> MenuStack = new Stack<RadialMenu_MenuItem>();
+        protected Stack<IRadialMenuContainer> MenuStack = new Stack<IRadialMenuContainer>();
         
         protected RadialMenu_MenuItem[] CurrentItems {
             get {
@@ -141,6 +143,7 @@ namespace RadialMenu {
         /// <param name="forward"></param>
         public void Show(Vector3 position, Vector3 forward) {
 
+            SelectedIndex = -1;
             MenuStack.Clear();
 
             if (Cursor != null) Cursor.SetActive(true);
@@ -154,6 +157,7 @@ namespace RadialMenu {
             transform.position = position;
             transform.forward = forward;
 
+            
             BuildSegments();
             RevealSegments();
         }
@@ -163,7 +167,7 @@ namespace RadialMenu {
         /// 
         /// </summary>
         public void Hide() {
-            if (!IsVisible) return;
+            if (!Visible) return;
 
             SelectedIndex = -1;
             UnrevealSegments();
@@ -175,7 +179,7 @@ namespace RadialMenu {
         /// </summary>
         /// <param name="position"></param>
         public void UpdateCursor(Vector3 position) {
-            if (!IsVisible) return;
+            if (!Visible) return;
 
             var localPosition = transform.InverseTransformPoint(position);
 
@@ -196,47 +200,51 @@ namespace RadialMenu {
         void BuildSegments() {
 
             //var activeSegments = MenuStack.Count > 0 ? MenuStack.Peek().Children : RootItems;
-            var ShowPaging = true;
+            var ShowPaging = false && CurrentItems.Length > 7;
 
             var SystemButtons = (ShowPaging ? 3 : 1);
 
             // Count = 1 (Back) + Item Count + (optional: paging buttons)
             var count = CurrentItems.Length + SystemButtons;
             var layout = SegmentPresets.ContainsKey(count) ? SegmentPresets[count] : SegmentPresets[8];
-            var items = new RadialMenu_MenuItem[count];
 
             var skipped = 0;
             for (int segmentIdx = 0; segmentIdx < layout.Count; segmentIdx++) {
+                var state = Segments[segmentIdx].gameObject.activeSelf;
+
+                Segments[segmentIdx].gameObject.SetActive(true);
                 Segments[segmentIdx].transform.localRotation = Quaternion.Euler(0, 0, layout[segmentIdx].Rotation);
+                Segments[segmentIdx].Contents.transform.rotation = transform.rotation;
                 Segments[segmentIdx].SegmentFillAmount = layout[segmentIdx].Size / 360.0f;
 
-                if ( layout[segmentIdx].SystemButton == SegmentSystemButton.Back) {
+                if (layout[segmentIdx].SystemButton == SegmentSystemButton.Back) {
                     Segments[segmentIdx].Item = CreateSystemButton(SegmentSystemButton.Back);
                     skipped++;
-                    continue;
-                }
 
-                if (ShowPaging && layout[segmentIdx].SystemButton == SegmentSystemButton.PageNext) {
+                }
+                else if (ShowPaging && layout[segmentIdx].SystemButton == SegmentSystemButton.PageNext) {
                     Segments[segmentIdx].Item = CreateSystemButton(SegmentSystemButton.PageNext);
                     skipped++;
-                    continue;
                 }
-                if (ShowPaging && layout[segmentIdx].SystemButton == SegmentSystemButton.PagePrev) {
+                else if (ShowPaging && layout[segmentIdx].SystemButton == SegmentSystemButton.PagePrev) {
                     Segments[segmentIdx].Item = CreateSystemButton(SegmentSystemButton.PagePrev);
                     skipped++;
-                    continue;
-                }
-
-                
-                var itemIdx = segmentIdx - skipped;
-
-                if (itemIdx < CurrentItems.Length) { 
-                    Segments[segmentIdx].Item = CurrentItems[itemIdx];
                 }
                 else {
-                    Segments[segmentIdx].Item = null;
+
+                    var itemIdx = segmentIdx - skipped;
+
+                    if (itemIdx < CurrentItems.Length) {
+                        Segments[segmentIdx].Item = CurrentItems[itemIdx];
+                        //state = true;
+                    }
+                    else {
+                        Segments[segmentIdx].Item = null;
+                        //state = false;
+                    }
                 }
-                    
+
+                Segments[segmentIdx].gameObject.SetActive(state);
             }
         }
 
@@ -253,7 +261,6 @@ namespace RadialMenu {
                 SegmentsMaster.GetComponent<Image>().fillAmount = 0;
 
                 SegmentsMaster.GetComponent<Mask>().enabled = true;
-                SelectedIndex = -1;
             })
             .setOnComplete(() => {
                 SegmentsMaster.GetComponent<Image>().enabled = false;
@@ -340,11 +347,23 @@ namespace RadialMenu {
         protected void ConfirmSegment() {
 
             if (Segments[SelectedIndex].IsSelectable) {
+
                 Debug.Log("Selected: " + Segments[SelectedIndex].Item.name);
-                Segments[SelectedIndex].Item.Selected();
+
+                var actionable = Segments[SelectedIndex].Item as IRadialMenuAction;
+                if (actionable != null) actionable.PerformAction();
+
+                var submenu = Segments[SelectedIndex].Item as IRadialMenuContainer;
+                if (submenu != null && submenu.HasChildren) { 
+
+                    MenuStack.Push(submenu);
+                    BuildSegments();
+                }
+
+                SelectedIndex = -1;
             }
 
-            SelectedIndex = -1;
+            
         }
 
         #endregion
@@ -370,7 +389,13 @@ namespace RadialMenu {
             return result;
         }
         
-        void _SystemBack() { Debug.Log("RM System Back"); }
+        void _SystemBack() {
+            Debug.Log("RM System Back");
+            if ( MenuStack.Count > 0)
+                MenuStack.Pop();
+
+            BuildSegments();
+        }
         void _SystemPagePrev() { Debug.Log("RM System PagePrev"); }
         void _SystemPageNext() { Debug.Log("RM System PageNext"); }
 

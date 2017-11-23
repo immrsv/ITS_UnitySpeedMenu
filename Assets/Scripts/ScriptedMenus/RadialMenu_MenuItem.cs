@@ -3,10 +3,10 @@ using System.Collections.Generic;
 using UnityEngine;
 
 
-namespace RadialMenu
+namespace RadialMenu.ScriptedMenus
 {
-    [CreateAssetMenu(fileName = "MenuItem", menuName = "Radial Menu/Items/Action")]
-    public class RadialMenu_MenuItem : ScriptableObject
+    [CreateAssetMenu(fileName = "MenuItem", menuName = "Radial Menu/Menu Item")]
+    public class RadialMenu_MenuItem : ScriptableObject, IRadialMenuContainer, IRadialMenuAction
     {
 
         public RadialMenu_MenuItem() {
@@ -28,17 +28,19 @@ namespace RadialMenu
         public string Parameter;
 
         [Header("Submenu")]
-        public List<RadialMenu_MenuItem> Children;
+        public List<RadialMenu_MenuItem> _Children = new List<RadialMenu_MenuItem>();
+        public List<RadialMenu_MenuItem> Children { get { return _Children; } }
 
+        public bool HasChildren {  get { return _Children != null && _Children.Count > 0; } }
         /// <summary>
         /// 
         /// </summary>
         /// <returns>True if has submenu</returns>
-        public bool Selected() {
+        public void PerformAction() {
 
             if (ActionOverride!= null) {
                 ActionOverride();
-                return false;
+                return;
             }
 
             if (!(string.IsNullOrEmpty(ObjectName) || string.IsNullOrEmpty(ActionName))) {
@@ -47,9 +49,6 @@ namespace RadialMenu
                 if (go != null)
                     go.BroadcastMessage(ActionName, Parameter, SendMessageOptions.DontRequireReceiver);
             }
-
-            return Children.Count > 0;
-
         }
 
 

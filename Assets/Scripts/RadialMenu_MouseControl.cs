@@ -42,7 +42,7 @@ namespace RadialMenu {
                 Menu.Hide();
             }
 
-            if (Menu.IsVisible) {
+            if (Menu.Visible) {
                 Menu.UpdateCursor(worldPosition);
             }
         }
